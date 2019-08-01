@@ -3,7 +3,7 @@ Teo is a moderation discord bot with funny features.
 
 Teo is my doggo and it can ban you, kick you and delete your messages!
 
-Prefixes: ), @Teo#8099
+Prefixes: `)`, `@Teo#8099`
 
 It can see your infos with the **about** command and see your avatar with the **avatar** command!
 
