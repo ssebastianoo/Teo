@@ -371,4 +371,4 @@ async def on_guild_remove(guild):
   await channel.send(embed=emb)
   
 
-teo.run('NTY0MDY0MjA0Mzg3MTIzMjEw.XUIAgQ.KTQTNnwzn_HatYhmxwM6aWGSGxY')
+teo.run('')
