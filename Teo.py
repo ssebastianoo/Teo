@@ -8,61 +8,64 @@ import logging
 import json
 import requests
 
-teo = commands.Bot(command_prefix = [')', '<@564064204387123210> '])
-teo.remove_command('help')
+bot = commands.Bot(command_prefix = [')', '<@564064204387123210> '])
+bot.remove_command('help')
+bot.load_extension("jishaku")
 
-class DiscordBotsOrgAPI(commands.Cog):
-    """Handles interactions with the discordbots.org API"""
 
-    def __init__(self, bot):
-        self.bot = bot
-        self.token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU2NDA2NDIwNDM4NzEyMzIxMCIsImJvdCI6dHJ1ZSwiaWF0IjoxNTY2MDc4MTg1fQ.CyzPKWpjMFKeH4Q8-AVNTtwodr2pgnOVzapOUvDq46M' 
-        self.dblpy = dbl.Client(self.bot, self.token)
-        self.updating = self.bot.loop.create_task(self.update_stats())
 
-    async def update_stats(self):
-        """This function runs every 30 minutes to automatically update your server count"""
-        while not self.bot.is_closed():
-            try:
-                await self.dblpy.post_guild_count()
-            except Exception as e:
-              await asyncio.sleep(1800)
+@bot.command()
+@commands.is_owner()
+async def load(ctx, extension):
+    bot.load_extension(f'cogs.{extension}')
+    await ctx.send('done')
 
-def setup(bot):
-    bot.add_cog(DiscordBotsOrgAPI(bot))
+@bot.command()
+@commands.is_owner()
+async def unload(ctx, extension):
+    bot.unload_extension(f'cogs.{extension}')
+    await ctx.send('done')
 
-@teo.event
+@bot.command()
+@commands.is_owner()
+async def reload(ctx, extension):
+  bot.unload_extension(f'cogs.{extension}')
+  bot.load_extension(f'cogs.{extension}')
+  await ctx.send('done')
+  
+
+@bot.event
 async def on_ready():
-  print('I am', teo.user)
+  print('I am', bot.user)
+
   
   while True:
     
-    guilds = len([s for s in teo.guilds]) #eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU2NDA2NDIwNDM4NzEyMzIxMCIsImJvdCI6dHJ1ZSwiaWF0IjoxNTY2MDc4MTg1fQ.CyzPKWpjMFKeH4Q8-AVNTtwodr2pgnOVzapOUvDq46M
-    
-    await teo.change_presence(status=discord.Status.idle, activity=discord.Game(name=f'{guilds} servers!'))
+    guilds = len([s for s in bot.guilds]) 
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Game(name=f'{guilds} servers!'))
     await asyncio.sleep(25)
-    await teo.change_presence(status=discord.Status.idle, activity=discord.Game(name='With my master :)'))
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Game(name='With my master :)'))
     
-    await teo.change_presence(status=discord.Status.idle, activity=discord.Game(name='Wof!'))
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Game(name='Wof!'))
     await asyncio.sleep(25)
-    await teo.change_presence(status=discord.Status.idle, activity=discord.Game(name='With my master :)'))
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Game(name='With my master :)'))
     
     await asyncio.sleep(25)
-    await teo.change_presence(status=discord.Status.idle, activity=discord.Game(name=')help'))
+    await bot.change_presence(status=discord.Status.idle, activity=discord.Game(name=')help'))
     await asyncio.sleep(25)
     
   
   
 
 
-@teo.event
+@bot.event
 async def on_message(message):
   
-  await teo.process_commands(message)
+  await bot.process_commands(message)
   
   coin = ['Head', 'Tail']
   
-  if message.author == teo.user:
+  if message.author == bot.user:
     
     if message.content == 'You have launched a coin...':
       
@@ -73,11 +76,11 @@ async def on_message(message):
       await asyncio.sleep(0.5)
       await message.edit(embed=emb)
   
-@teo.command()
+@bot.command()
 @commands.is_owner()
 async def servers(ctx):
-  guilds = teo.guilds
-  num = len([s for s in teo.guilds])
+  guilds = bot.guilds
+  num = len([s for s in bot.guilds])
   result = ""
   for guild in guilds:
     result += f'**{guild.name}**' + f'  `{guild.member_count} members`' + "\n" 
@@ -85,15 +88,15 @@ async def servers(ctx):
   await ctx.send(embed=emb)
  
   
-@teo.command()
+@bot.command()
 async def ping(ctx):
   """Shows bot latency!"""
-  ping = (teo.latency + 100)
+  ping = (round(bot.latency * 1000))
   emb = discord.Embed(description = f'{ping}ms', colour = 0xfff157)
   emb.set_author(name = ctx.author.name, url = ctx.author.avatar_url, icon_url = ctx.author.avatar_url)
   await ctx.send(content=None, embed=emb)
 
-@teo.command()
+@bot.command()
 async def help(ctx):
 
   emb = discord.Embed(title='Help Message', colour = 0xfff157)
@@ -105,7 +108,7 @@ async def help(ctx):
   emb.add_field(name='Purge messages', value='`clear <number of messages>` (max is 100)', inline=False)
   emb.add_field(name='Get user info', value='`about <user>` (if `user` is empty the bot will send message author info)', inline=False)
   emb.add_field(name="See a user's avatar", value='`avatar <user>` (if `user` is empty the bot will send message author info)', inline=False)
-  emb.add_field(name='Say something with Teo', value='`say "<something>"`', inline = False)
+  emb.add_field(name='Say something with bot', value='`say "<something>"`', inline = False)
   emb.add_field(name='Get the invite link', value = '`invite`', inline = False)
   emb.add_field(name='Create a channel!', value = '`channel "<name>" "<topic>" "<slowmode>"`', inline=False)
   emb.add_field(name='Flip a coin!', value = '`coinflip`', inline = False)
@@ -116,7 +119,7 @@ async def help(ctx):
 
 
 
-@teo.command()
+@bot.command()
 async def about(ctx, member: discord.Member=None):
 
   if not member:
@@ -167,7 +170,7 @@ async def about(ctx, member: discord.Member=None):
   
   await ctx.send(embed=emb)
   
-@teo.command()
+@bot.command()
 async def guild(ctx):
   
   guild = ctx.guild 
@@ -187,14 +190,14 @@ async def guild(ctx):
   
   await ctx.send(embed=emb)
 
-@teo.command()
+@bot.command()
 @commands.has_permissions(administrator=True, kick_members=True)
 async def clear(ctx, amount=100):
   """Delete some messages"""
   await ctx.message.delete()
   await ctx.channel.purge(limit=amount)
 
-@teo.command()
+@bot.command()
 @commands.has_permissions(administrator=True, ban_members=True)
 async def ban(ctx, member: discord.Member=None, *, reason):
 
@@ -204,7 +207,7 @@ async def ban(ctx, member: discord.Member=None, *, reason):
     await ctx.send(embed=emb)
     return
 
-  if reason == None:
+  if not reason:
     
     emb = discord.Embed(title='Nope', description='**`ban <user> <reason>`**', colour = 0xfffb00)
     await ctx.send(embed=emb)
@@ -218,13 +221,13 @@ async def ban(ctx, member: discord.Member=None, *, reason):
   dm = discord.Embed(title='Banned!', description=f'{member.mention}, you have been banned from {ctx.author.guild}.', colour = 0xcf1313)
   dm.add_field(name='Reason', value=reason, inline=False)
   dm.add_field(name='Moderator', value=ctx.author.mention, inline=False)
-  await member.ban(reason=reason, delete_message_days=1)
 
-  await ctx.send(embed=emb)
   await member.send(embed=dm)
+  await member.ban(reason=reason, delete_message_days=1)
+  await ctx.send(embed=emb)
   await ctx.message.delete()
 
-@teo.command()
+@bot.command()
 @commands.has_permissions(administrator=True, kick_members=True)
 async def kick(ctx, member: discord.Member=None, *, reason):
 
@@ -234,7 +237,7 @@ async def kick(ctx, member: discord.Member=None, *, reason):
     await ctx.send(embed=emb)
     return
 
-  if reason == None:
+  if not reason:
     
     emb = discord.Embed(title='Nope', description='**`kick <user> <reason>`**', colour = 0xfffb00)
     await ctx.send(embed=emb)
@@ -245,16 +248,16 @@ async def kick(ctx, member: discord.Member=None, *, reason):
   emb.add_field(name='Reason', value=reason, inline=False)
   emb.add_field(name='Moderator', value = ctx.author.mention, inline=False)
   
-  dm = discord.Embed(title='Kickef!', description=f'{member.mention}, you have been kicked from {ctx.author.guild}.', colour = 0xcf1313)
+  dm = discord.Embed(title='Kicked!', description=f'{member.mention}, you have been kicked from {ctx.author.guild}.', colour = 0xcf1313)
   dm.add_field(name='Reason', value=reason, inline=False)
   dm.add_field(name='Moderator', value=ctx.author.mention, inline=False)
   
-  await member.kick(reason=reason)
   await member.send(embed=dm)
+  await member.kick(reason=reason)
   await ctx.send(embed=emb)
   await ctx.message.delete()
 
-@teo.command()
+@bot.command()
 @commands.has_permissions(administrator=True, ban_members=True)
 async def unban(ctx, *, member):
   
@@ -272,19 +275,28 @@ async def unban(ctx, *, member):
       await ctx.guild.unban(user)
       await ctx.send(f'{user.mention} unbanned')
 
-
-
 @ban.error
 async def ban_error(ctx, error):
-  await ctx.author.send(error)
-  await ctx.message.delete()
-
+  if isinstance(error, commands.MissingRequiredArgument):
+    emb = discord.Embed(title = 'Error', description = '`ban <member> <reason>`', colour = 0x000000)
+    await ctx.send(embed = emb)
+    
+  if isinstance(error, commands.BadArgument):
+    emb = discord.Embed(title='Error', description = 'Member not found.', colour = 0x000000)
+    await ctx.send(embed = emb)
+    
 @kick.error
 async def kick_error(ctx, error):
-  await ctx.author.send(error)
-  await ctx.message.delete()
+  if isinstance(error, commands.MissingRequiredArgument):
+    emb = discord.Embed(title = 'Error', description = '`kick <member> <reason>`', colour = 0x000000)
+    await ctx.send(embed = emb)
+    
+  if isinstance(error, commands.BadArgument):
+    emb = discord.Embed(title='Error', description = 'Member not found.', colour = 0x000000)
+    await ctx.send(embed = emb)
 
-@teo.command()
+
+@bot.command()
 async def avatar(ctx, member: discord.Member=None):
 
   if not member:
@@ -301,25 +313,25 @@ async def avatar(ctx, member: discord.Member=None):
 
   await ctx.send(embed=emb)
 
-@teo.command()
+@bot.command()
 async def say(ctx, arg):
   emb = discord.Embed(title=None, description = arg, colour = 0xfff157)
   await ctx.send(embed=emb)
   await ctx.message.delete()
 
-@teo.command()
+@bot.command()
 async def emb(ctx, arg):
   emb = discord.Embed(colour = 0xfff157)
   emb.set_image(url=arg)
   await ctx.send(embed=emb) 
   
-@teo.command()
+@bot.command()
 async def invite(ctx):
   
   emb = discord.Embed(title=None, description='You can invite me by clicking [here](https://discordapp.com/api/oauth2/authorize?client_id=564064204387123210&permissions=268789862&scope=bot)', colour = 0xfff157)
   await ctx.send(embed=emb)
   
-@teo.command()
+@bot.command()
 @commands.has_permissions(manage_channels=True, administrator = True)
 async def channel(ctx, arg1, arg2 , arg3):
   
@@ -337,38 +349,54 @@ async def channel(ctx, arg1, arg2 , arg3):
 async def channel_error(ctx, error):
   await ctx.send(error)
   
-@teo.command()
+@bot.command()
 async def coinflip(ctx):
   await ctx.send('You have launched a coin...')
   
-@teo.command()
+@bot.command()
 async def calc(ctx, arg1, arg2):
   
   res = (int(arg1) + int(arg2))
   
   await ctx.send(f'**`{arg1}` + `{arg2}` = `{res}`**')
   
-@teo.event
+@bot.event
 async def on_guild_join(guild):
   
-  channel = teo.get_channel(607358470907494420)
+  channel = bot.get_channel(607358470907494420)
   
-  emb = discord.Embed(title=f'Teo has just joined {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
+  
+  emb = discord.Embed(title=f'bot has just joined {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
   emb.set_thumbnail(url=guild.icon_url)
   emb.add_field(name='ID', value = guild.id)
+  emb.add_field(name = 'Owner', value = guild.owner)
   
   await channel.send(embed=emb)
   
-@teo.event
+@bot.event
 async def on_guild_remove(guild):
   
-  channel = teo.get_channel(607358470907494420)
+  channel = bot.get_channel(607358470907494420)
   
-  emb = discord.Embed(title=f'Teo has just left {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
+  emb = discord.Embed(title=f'bot has just left {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
   emb.set_thumbnail(url=guild.icon_url)
   emb.add_field(name='ID', value = guild.id)
   
   await channel.send(embed=emb)
   
+@bot.command()
+async def info(ctx):
+  
+  emb = discord.Embed(title = 'Developer', description = 'Sebastiano#5005', colour = 0xfff157)
+  emb.set_thumbnail(url = bot.user.avatar_url)
+  emb.add_field(name = 'GitHub Repo', value = '[Click Me](https://github.com/ssebastianoo/Teo)')
+  emb.add_field(name = 'Library', value = '`discord.py`')
+  emb.add_field(name = 'Prefixes', value = '`)` and `@Teo#8099`')
+  emb.set_image(url = 'https://discordbots.org/api/widget/564064204387123210.png?topcolor=2C2F33&middlecolor=23272A&usernamecolor=FFFFFF&certifiedcolor=FFFFFF&datacolor=FFFFFF&labelcolor=99AAB5&highlightcolor=2C2F33')
+  await ctx.send(embed = emb)
 
-teo.run('')
+for filename in os.listdir('./cogs'):
+    if filename.endswith('.py'):
+        bot.load_extension(f'cogs.{filename[:-3]}')  
+  
+bot.run('')
