@@ -11,4 +11,4 @@ It can say whatever you want because is a magic dog and it can write!
 
 Teo is 15 years old but it's so active and positive! Yeh!
 
-You ca invite the bot clicking [here](https://discordapp.com/api/oauth2/authorize?client_id=564064204387123210&permissions=268789862&scope=bot)!
+You can invite the bot clicking [here](https://discordapp.com/api/oauth2/authorize?client_id=564064204387123210&permissions=268789862&scope=bot)!
