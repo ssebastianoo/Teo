@@ -7,8 +7,17 @@ import dbl
 import logging
 import json
 import requests
+import datetime
+import time
 
-bot = commands.Bot(command_prefix = [')', '<@564064204387123210> '])
+def get_prefix(bot, message):
+  with open ('teo_pref.json', 'r') as f:
+    prefixes = json.load(f)
+    
+  return prefixes[str(message.guild.id)]
+
+
+bot = commands.Bot(command_prefix = get_prefix)
 bot.remove_command('help')
 bot.load_extension("jishaku")
 
@@ -54,28 +63,11 @@ async def on_ready():
     await bot.change_presence(status=discord.Status.idle, activity=discord.Game(name=')help'))
     await asyncio.sleep(25)
     
-  
-  
 
 
-@bot.event
-async def on_message(message):
-  
-  await bot.process_commands(message)
-  
-  coin = ['Head', 'Tail']
-  
-  if message.author == bot.user:
-    
-    if message.content == 'You have launched a coin...':
-      
-      r = random.choice(coin)
-      
-      emb = discord.Embed(title=r, colour = 0xfff157)
-      
-      await asyncio.sleep(0.5)
-      await message.edit(embed=emb)
-  
+     
+     
+     
 @bot.command()
 @commands.is_owner()
 async def servers(ctx):
@@ -86,6 +78,14 @@ async def servers(ctx):
     result += f'**{guild.name}**' + f'  `{guild.member_count} members`' + "\n" 
   emb = discord.Embed(title=f'{num} guilds', description=result, colour = 0xfff157)
   await ctx.send(embed=emb)
+  
+  res = ''
+  
+  for guild in guilds:
+    
+    res += f'"{guild.id}": ")", \n'
+    
+  await ctx.send(res)
  
   
 @bot.command()
@@ -101,7 +101,7 @@ async def help(ctx):
 
   emb = discord.Embed(title='Help Message', colour = 0xfff157)
   emb.set_thumbnail(url=ctx.author.avatar_url)
-  emb.add_field(name='Prefixes', value='`)` `@Teo#8099`', inline=False)
+  emb.add_field(name = 'Get Infos about the bot', value = '`info`', inline = False)
   emb.add_field(name='See bot latency', value='`ping`', inline=False)
   emb.add_field(name='Ban!', value='`ban <user> <reason>`', inline=False)
   emb.add_field(name='Kick!', value='`kick <user> <reason>`', inline=False)
@@ -113,9 +113,9 @@ async def help(ctx):
   emb.add_field(name='Create a channel!', value = '`channel "<name>" "<topic>" "<slowmode>"`', inline=False)
   emb.add_field(name='Flip a coin!', value = '`coinflip`', inline = False)
   emb.add_field(name='Little maths! (+)', value = '`calc <num> <num>`')
+  emb.add_field(name = 'Change Prefix', value = '`prefix <new prefix>`')
   await ctx.send(embed=emb)
   
-
 
 
 
@@ -222,10 +222,10 @@ async def ban(ctx, member: discord.Member=None, *, reason):
   dm.add_field(name='Reason', value=reason, inline=False)
   dm.add_field(name='Moderator', value=ctx.author.mention, inline=False)
 
-  await member.send(embed=dm)
   await member.ban(reason=reason, delete_message_days=1)
   await ctx.send(embed=emb)
   await ctx.message.delete()
+  await member.send(embed=dm)
 
 @bot.command()
 @commands.has_permissions(administrator=True, kick_members=True)
@@ -252,10 +252,10 @@ async def kick(ctx, member: discord.Member=None, *, reason):
   dm.add_field(name='Reason', value=reason, inline=False)
   dm.add_field(name='Moderator', value=ctx.author.mention, inline=False)
   
-  await member.send(embed=dm)
   await member.kick(reason=reason)
   await ctx.send(embed=emb)
   await ctx.message.delete()
+  await member.send(embed=dm)
 
 @bot.command()
 @commands.has_permissions(administrator=True, ban_members=True)
@@ -281,8 +281,14 @@ async def ban_error(ctx, error):
     emb = discord.Embed(title = 'Error', description = '`ban <member> <reason>`', colour = 0x000000)
     await ctx.send(embed = emb)
     
-  if isinstance(error, commands.BadArgument):
+  
+    
+  elif isinstance(error, commands.BadArgument):
     emb = discord.Embed(title='Error', description = 'Member not found.', colour = 0x000000)
+    await ctx.send(embed = emb)
+    
+  else:
+    emb = discord.Embed(title = 'Error', description = f'> ```{error}```', colour = 0x000000)
     await ctx.send(embed = emb)
     
 @kick.error
@@ -351,7 +357,16 @@ async def channel_error(ctx, error):
   
 @bot.command()
 async def coinflip(ctx):
-  await ctx.send('You have launched a coin...')
+  msg = await ctx.send('You have launched a coin...')
+  
+  coin = ['Head', 'Tail']
+  r = random.choice(coin)
+  
+  emb = discord.Embed(title=r, colour = 0xfff157)
+  
+  await asyncio.sleep(0.5)
+  await msg.edit(embed=emb)
+      
   
 @bot.command()
 async def calc(ctx, arg1, arg2):
@@ -363,10 +378,19 @@ async def calc(ctx, arg1, arg2):
 @bot.event
 async def on_guild_join(guild):
   
+  with open ('prefixes.json', 'r') as f:
+    prefixes = json.load(f)
+    
+  prefixes[str(guild.id)] = ')'
+  
+  with open ('prefixes.json', 'w') as f:
+    json.dump(prefixes, f, indent = 4)
+  
+  
   channel = bot.get_channel(607358470907494420)
   
   
-  emb = discord.Embed(title=f'bot has just joined {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
+  emb = discord.Embed(title=f'Teo has just joined {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
   emb.set_thumbnail(url=guild.icon_url)
   emb.add_field(name='ID', value = guild.id)
   emb.add_field(name = 'Owner', value = guild.owner)
@@ -376,14 +400,56 @@ async def on_guild_join(guild):
 @bot.event
 async def on_guild_remove(guild):
   
+  with open ('teo_pref.json', 'r') as f:
+    prefixes = json.load(f)
+    
+  prefixes.pop(str(guild.id))
+  
+  with open ('teo_pref.json', 'w') as f:
+    json.dump(prefixes, f, indent = 4)
+  
+  
   channel = bot.get_channel(607358470907494420)
   
-  emb = discord.Embed(title=f'bot has just left {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
+  emb = discord.Embed(title=f'Teo has just left {guild.name}!', description = f'{guild.member_count} members', colour = 0xfff157)
   emb.set_thumbnail(url=guild.icon_url)
   emb.add_field(name='ID', value = guild.id)
   
   await channel.send(embed=emb)
   
+@bot.command()
+@commands.has_permissions(administrator = True)
+async def prefix(ctx, prefix):
+  
+  with open ('teo_pref.json', 'r') as f:
+    prefixes = json.load(f)
+    
+  prefixes[str(ctx.guild.id)] = prefix
+  
+  with open ('teo_pref.json', 'w') as f:
+    json.dump(prefixes, f, indent = 4)
+    
+  await ctx.send(f'Ok, the prefix for this server is now `{prefix}`')  
+  
+@bot.command()
+@commands.is_owner()
+async def setprefix(ctx, prefix):
+  
+  with open ('teo_pref.json', 'r') as f:
+    prefixes = json.load(f)
+    
+  prefixes[str(ctx.guild.id)] = prefix
+  
+  with open ('teo_pref.json', 'w') as f:
+    json.dump(prefixes, f, indent = 4)
+    
+  await ctx.send(f'Ok, the prefix for this server is now `{prefix}`')  
+  
+@prefix.error
+async def prefix_error(ctx, error):
+  await ctx.send(f'''**ERROR** ```css
+{error}```''')
+
 @bot.command()
 async def info(ctx):
   
@@ -392,11 +458,48 @@ async def info(ctx):
   emb.add_field(name = 'GitHub Repo', value = '[Click Me](https://github.com/ssebastianoo/Teo)')
   emb.add_field(name = 'Library', value = '`discord.py`')
   emb.add_field(name = 'Prefixes', value = '`)` and `@Teo#8099`')
-  emb.set_image(url = 'https://discordbots.org/api/widget/564064204387123210.png?topcolor=2C2F33&middlecolor=23272A&usernamecolor=FFFFFF&certifiedcolor=FFFFFF&datacolor=FFFFFF&labelcolor=99AAB5&highlightcolor=2C2F33')
+  emb.add_field(name = 'top.gg', value = '[Vote Me](https://top.gg/bot/564064204387123210/vote)')
+  emb.set_image(url = 'https://top.gg/api/widget/564064204387123210.png?topcolor=2C2F33&middlecolor=23272A&usernamecolor=FFFFFF&certifiedcolor=FFFFFF&datacolor=FFFFFF&labelcolor=99AAB5&highlightcolor=2C2F33')
   await ctx.send(embed = emb)
+
+@bot.command()
+async def battle(ctx, member: discord.Member=None):
+  
+  author = ctx.author
+  
+  
+  if not member:
+    await ctx.send('**That is not a valid member.**')
+    return 
+    
+  
+  emb = discord.Embed(description = '*Fighting*', colour = 0xfff157)
+  emb.set_author(name = f'{author.name} __vs__ {member.name}', icon_url = 'https://discordemoji.com/assets/emoji/loading.gif')
+  
+  
+  winner = [author.mention, member.mention]
+  
+  r = random.choice(winner)
+  
+  emb2 = discord.Embed(colour = 0xfff157, timestamp = datetime.datetime.now(), description = f'{r} Won!')
+  emb2.set_author(name = f'{author.name} vs {member.name}', icon_url = 'https://www.fg-a.com/medieval/2-knight-in-battle.gif')
+  emb2.set_footer(text = 'UTC', icon_url = 'https://img.pngio.com/animated-gif-stopwatch-mkkr-design-stopwatch-gif-animation-clock-png-gif-550_550.gif')
+  
+  battle = await ctx.send(embed = emb)
+  
+  await asyncio.sleep(4)
+  
+  await battle.edit(embed = emb2)
+  
+  
+
+  
+
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         bot.load_extension(f'cogs.{filename[:-3]}')  
+        
+
   
 bot.run('')
