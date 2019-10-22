@@ -10,14 +10,9 @@ import requests
 import datetime
 import time
 
-def get_prefix(bot, message):
-  with open ('teo_pref.json', 'r') as f:
-    prefixes = json.load(f)
-    
-  return prefixes[str(message.guild.id)]
 
 
-bot = commands.Bot(command_prefix = get_prefix)
+bot = commands.Bot(command_prefix = commands.when_mentioned_or(')'))
 bot.remove_command('help')
 bot.load_extension("jishaku")
 
@@ -79,14 +74,7 @@ async def servers(ctx):
   emb = discord.Embed(title=f'{num} guilds', description=result, colour = 0xfff157)
   await ctx.send(embed=emb)
   
-  res = ''
-  
-  for guild in guilds:
-    
-    res += f'"{guild.id}": ")", \n'
-    
-  await ctx.send(res)
- 
+
   
 @bot.command()
 async def ping(ctx):
@@ -104,7 +92,9 @@ async def help(ctx):
   emb.add_field(name = 'Get Infos about the bot', value = '`info`', inline = False)
   emb.add_field(name='See bot latency', value='`ping`', inline=False)
   emb.add_field(name='Ban!', value='`ban <user> <reason>`', inline=False)
+  emb.add_field(name = 'Ban with ID!', value = '`idban <user id> <reason>` | I have to share a server with that user.')
   emb.add_field(name='Kick!', value='`kick <user> <reason>`', inline=False)
+  emb.add_field(name = 'Mute!', value = '`mute <user> <reason>`')
   emb.add_field(name='Purge messages', value='`clear <number of messages>` (max is 100)', inline=False)
   emb.add_field(name='Get user info', value='`about <user>` (if `user` is empty the bot will send message author info)', inline=False)
   emb.add_field(name="See a user's avatar", value='`avatar <user>` (if `user` is empty the bot will send message author info)', inline=False)
@@ -113,10 +103,32 @@ async def help(ctx):
   emb.add_field(name='Create a channel!', value = '`channel "<name>" "<topic>" "<slowmode>"`', inline=False)
   emb.add_field(name='Flip a coin!', value = '`coinflip`', inline = False)
   emb.add_field(name='Little maths! (+)', value = '`calc <num> <num>`')
-  emb.add_field(name = 'Change Prefix', value = '`prefix <new prefix>`')
   await ctx.send(embed=emb)
   
+@bot.command()
+@commands.has_permissions(ban_members = True)
+async def idban(ctx, arg: int, *, reason = None):
+  
+  user = bot.get_user(arg)
+  
+  await ctx.guild.ban(user, reason = reason, delete_message_days = 3)
+  
+  emb = discord.Embed(title = 'User Banned', description = f'{user} has been banned from {ctx.guild.name}!', colour =  0xcf1313)
+  emb.add_field(name = 'Moderator', value = ctx.author.mention, inline = False)
+  emb.add_field(name = 'Reason', value = reason)
+  
+  await ctx.send(embed = emb)
+  await user.send(f'''You have been banned from {ctx.guild.name} by {ctx.author}, with the reason: 
+> ```css
+{reason}
+```''')
 
+@idban.error
+async def idban_error(ctx, error):
+  
+  await ctx.send(f'''**ERROR** ```css
+{error}
+```''')
 
 
 @bot.command()
@@ -191,6 +203,11 @@ async def guild(ctx):
   await ctx.send(embed=emb)
 
 @bot.command()
+async def donate(ctx):
+  
+  emb = discord.Embed(title = 'Donate to developer', description = '[Click Me](paypal.me/ssebastianoo) Thanks:heart:', colour =  0xfff157)
+
+@bot.command()
 @commands.has_permissions(administrator=True, kick_members=True)
 async def clear(ctx, amount=100):
   """Delete some messages"""
@@ -199,7 +216,7 @@ async def clear(ctx, amount=100):
 
 @bot.command()
 @commands.has_permissions(administrator=True, ban_members=True)
-async def ban(ctx, member: discord.Member=None, *, reason):
+async def ban(ctx, member: discord.Member=None, *, reason=None):
 
   if not member:
     
@@ -226,10 +243,12 @@ async def ban(ctx, member: discord.Member=None, *, reason):
   await ctx.send(embed=emb)
   await ctx.message.delete()
   await member.send(embed=dm)
+  
+  
 
 @bot.command()
 @commands.has_permissions(administrator=True, kick_members=True)
-async def kick(ctx, member: discord.Member=None, *, reason):
+async def kick(ctx, member: discord.Member=None, *, reason=None):
 
   if not member:
     
@@ -337,6 +356,8 @@ async def invite(ctx):
   emb = discord.Embed(title=None, description='You can invite me by clicking [here](https://discordapp.com/api/oauth2/authorize?client_id=564064204387123210&permissions=268789862&scope=bot)', colour = 0xfff157)
   await ctx.send(embed=emb)
   
+  
+  
 @bot.command()
 @commands.has_permissions(manage_channels=True, administrator = True)
 async def channel(ctx, arg1, arg2 , arg3):
@@ -378,13 +399,6 @@ async def calc(ctx, arg1, arg2):
 @bot.event
 async def on_guild_join(guild):
   
-  with open ('prefixes.json', 'r') as f:
-    prefixes = json.load(f)
-    
-  prefixes[str(guild.id)] = ')'
-  
-  with open ('prefixes.json', 'w') as f:
-    json.dump(prefixes, f, indent = 4)
   
   
   channel = bot.get_channel(607358470907494420)
@@ -400,13 +414,7 @@ async def on_guild_join(guild):
 @bot.event
 async def on_guild_remove(guild):
   
-  with open ('teo_pref.json', 'r') as f:
-    prefixes = json.load(f)
-    
-  prefixes.pop(str(guild.id))
-  
-  with open ('teo_pref.json', 'w') as f:
-    json.dump(prefixes, f, indent = 4)
+
   
   
   channel = bot.get_channel(607358470907494420)
@@ -417,50 +425,8 @@ async def on_guild_remove(guild):
   
   await channel.send(embed=emb)
   
-@bot.command()
-@commands.has_permissions(administrator = True)
-async def prefix(ctx, prefix):
-  
-  with open ('teo_pref.json', 'r') as f:
-    prefixes = json.load(f)
-    
-  prefixes[str(ctx.guild.id)] = prefix
-  
-  with open ('teo_pref.json', 'w') as f:
-    json.dump(prefixes, f, indent = 4)
-    
-  await ctx.send(f'Ok, the prefix for this server is now `{prefix}`')  
-  
-@bot.command()
-@commands.is_owner()
-async def setprefix(ctx, prefix):
-  
-  with open ('teo_pref.json', 'r') as f:
-    prefixes = json.load(f)
-    
-  prefixes[str(ctx.guild.id)] = prefix
-  
-  with open ('teo_pref.json', 'w') as f:
-    json.dump(prefixes, f, indent = 4)
-    
-  await ctx.send(f'Ok, the prefix for this server is now `{prefix}`')  
-  
-@prefix.error
-async def prefix_error(ctx, error):
-  await ctx.send(f'''**ERROR** ```css
-{error}```''')
 
-@bot.command()
-async def info(ctx):
   
-  emb = discord.Embed(title = 'Developer', description = 'Sebastiano#5005', colour = 0xfff157)
-  emb.set_thumbnail(url = bot.user.avatar_url)
-  emb.add_field(name = 'GitHub Repo', value = '[Click Me](https://github.com/ssebastianoo/Teo)')
-  emb.add_field(name = 'Library', value = '`discord.py`')
-  emb.add_field(name = 'Prefixes', value = '`)` and `@Teo#8099`')
-  emb.add_field(name = 'top.gg', value = '[Vote Me](https://top.gg/bot/564064204387123210/vote)')
-  emb.set_image(url = 'https://top.gg/api/widget/564064204387123210.png?topcolor=2C2F33&middlecolor=23272A&usernamecolor=FFFFFF&certifiedcolor=FFFFFF&datacolor=FFFFFF&labelcolor=99AAB5&highlightcolor=2C2F33')
-  await ctx.send(embed = emb)
 
 @bot.command()
 async def battle(ctx, member: discord.Member=None):
@@ -474,7 +440,7 @@ async def battle(ctx, member: discord.Member=None):
     
   
   emb = discord.Embed(description = '*Fighting*', colour = 0xfff157)
-  emb.set_author(name = f'{author.name} __vs__ {member.name}', icon_url = 'https://discordemoji.com/assets/emoji/loading.gif')
+  emb.set_author(name = f'{author.name} vs {member.name}', icon_url = 'https://discordemoji.com/assets/emoji/loading.gif')
   
   
   winner = [author.mention, member.mention]
@@ -491,9 +457,39 @@ async def battle(ctx, member: discord.Member=None):
   
   await battle.edit(embed = emb2)
   
+@bot.command(aliases = ['m'])
+@commands.has_permissions(kick_members = True)
+async def mute(ctx, member: discord.Member = None, *, reason=None):
   
-
+  role = discord.utils.get(ctx.guild.roles, name = 'Muted')
   
+  if role == None:
+    
+    role = await ctx.guild.create_role(name = 'Muted', reason = 'Bot Muted Role')
+    
+  await member.add_roles(role)
+    
+  await ctx.send(f'''**{member.mention} has been muted by {ctx.author.mention}**
+*Reason:*
+>>> ```css
+{reason}```''') 
+    
+  for channel in ctx.guild.channels:
+    
+    await channel.set_permissions(role, send_messages = False)
+    
+@bot.command(alises = ['um'])
+@commands.has_permissions(kick_members = True)
+async def unmute(ctx, member: discord.Member = None):
+  
+  role = discord.utils.get(ctx.guild.roles, name = 'Muted')
+  
+  await member.remove_roles(role)
+  
+  await ctx.send(f'''**{member.mention} has been unmuted by {ctx.author.mention}**''') 
+    
+  
+    
 
 
 for filename in os.listdir('./cogs'):
@@ -502,4 +498,4 @@ for filename in os.listdir('./cogs'):
         
 
   
-bot.run('')
+bot.run('NTY0MDY0MjA0Mzg3MTIzMjEw.XXo3qQ.cy-NHLeDZmoPm52EqtLsaegIEsE')
