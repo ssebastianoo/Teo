@@ -498,4 +498,4 @@ for filename in os.listdir('./cogs'):
         
 
   
-bot.run('NTY0MDY0MjA0Mzg3MTIzMjEw.XXo3qQ.cy-NHLeDZmoPm52EqtLsaegIEsE')
+bot.run('')
