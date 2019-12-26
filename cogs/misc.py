@@ -1,33 +1,30 @@
 import discord
-from discord.ext import commands 
+from discord.ext import commands
+
+
+# colour = 0xfff157
 
 class Misc(commands.Cog):
-  
+
   def __init__(self, bot):
 
-    self.bot = bot 
+    self.bot = bot
 
   @commands.command()
-  async def players(self, ctx, arg):
-
-    num = sum(m.activity == discord.Game(name = arg) for m in ctx.guild.members)
-    
-    if num == 0:
-      
-      await ctx.send(f'0 users are playing {arg}')
-      return
+  async def players(self, ctx, *, arg):
 
     res = ''
 
     for a in ctx.guild.members:
 
-      if a.activity == discord.Game(name = arg):
+        if a.activity:
 
-        res += f'{a} \n'
+            if a.activity.name == arg:
 
+                res += f'{a} \n'
 
-    await ctx.send(f'''{num} user(s) is/are playing {arg}
->>> {res}''')
+    emb = discord.Embed(title = f'{arg} players', description = res, colour = 0xfff157, timestamp = ctx.message.created_at)
+    await ctx.send(embed = emb)
 
 def setup(bot):
-  bot.add_cog(Misc(bot))  
+  bot.add_cog(Misc(bot))
