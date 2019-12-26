@@ -10,11 +10,9 @@ import requests
 import datetime
 import time
 
-bot = commands.Bot(command_prefix = commands.when_mentioned_or(')'))
+bot = commands.Bot(command_prefix = commands.when_mentioned_or('))'))
 bot.remove_command('help')
 bot.load_extension("jishaku")
-
-
 
 @bot.command(hidden = True)
 @commands.is_owner()
@@ -77,24 +75,17 @@ async def ping(ctx):
 
 @bot.command()
 @commands.has_permissions(ban_members = True)
-async def idban(ctx, arg: int, *, reason = None):
+async def idban(ctx, user_id: int, *, reason = None):
 
   "Ban a member that is not in the actual server"
 
-  user = bot.get_user(arg)
-
   try:
 
-      await ctx.guild.ban(user, reason = reason, delete_message_days = 3)
-      emb = discord.Embed(title = 'User Banned', description = f'{user} has been banned from {ctx.guild.name}!', colour =  0xcf1313)
+      await ctx.guild.ban(discord.Object(id=user_id), reason = reason)
+      emb = discord.Embed(title = 'User Banned', description = f'<@{user_id}> has been banned from {ctx.guild.name}!', colour =  0xcf1313, timestamp = ctx.message.created_at)
       emb.add_field(name = 'Moderator', value = ctx.author.mention, inline = False)
       emb.add_field(name = 'Reason', value = reason)
-
       await ctx.send(embed = emb)
-      await user.send(f'''You have been banned from {ctx.guild.name} by {ctx.author}, with the reason:
-> ```css
-{reason}
-```''')
 
   except AttributeError:
 
@@ -103,6 +94,8 @@ async def idban(ctx, arg: int, *, reason = None):
 
 @bot.command()
 async def about(ctx, member: discord.Member=None):
+
+        "see a user info"
 
         if not member:
 
@@ -235,16 +228,17 @@ async def donate(ctx):
   "Help the bot donating to the developer"
 
   emb = discord.Embed(title = 'Donate to developer', description = '[Click Me](https://paypal.me/ssebastianoo) Thanks:heart:', colour =  0xfff157)
+  await ctx.send(embed = emb)
 
 @bot.command()
-@commands.has_permissions(administrator=True, kick_members=True)
+@commands.has_permissions(kick_members=True)
 async def clear(ctx, amount=100):
   """Delete some messages"""
   await ctx.message.delete()
   await ctx.channel.purge(limit=amount)
 
 @bot.command()
-@commands.has_permissions(administrator=True, ban_members=True)
+@commands.has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member=None, *, reason=None):
 
   "Ban a member"
@@ -272,7 +266,7 @@ async def ban(ctx, member: discord.Member=None, *, reason=None):
 
 
 @bot.command()
-@commands.has_permissions(administrator=True, kick_members=True)
+@commands.has_permissions(kick_members=True)
 async def kick(ctx, member: discord.Member=None, *, reason=None):
 
   "Kick a member"
