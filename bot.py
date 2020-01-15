@@ -10,7 +10,7 @@ import requests
 import datetime
 import time
 
-bot = commands.Bot(command_prefix = commands.when_mentioned_or('))'))
+bot = commands.Bot(command_prefix = commands.when_mentioned_or(')'))
 bot.remove_command('help')
 bot.load_extension("jishaku")
 
@@ -340,16 +340,29 @@ async def avatar(ctx, member: discord.Member=None):
 @bot.command()
 async def say(ctx, *, message):
 
-  "Say something with Teo"
+    "Say something with Teo"
 
-  if 'http://' or 'https://' in message:
+    if '(http://' in message:
 
-      await ctx.send(f'⛔ | {ctx.author.mention} you put a link, this is not allowed.')
+        if ctx.author.guild_permissions.manage_messages:
 
-  emb = discord.Embed(description = message, colour = ctx.author.colour)
-  await ctx.send(embed=emb)
+            pass
 
-  await ctx.message.delete()
+        await ctx.send(f'⛔ | {ctx.author.mention} you tried to hide a link, this is not allowed.')
+
+    elif '(https://' in message:
+
+        if ctx.author.guild_permissions.manage_messages:
+
+            pass
+
+        await ctx.send(f'⛔ | {ctx.author.mention} you tried to hide a link, this is not allowed.')
+
+    else:
+
+        emb = discord.Embed(description = message, colour = ctx.author.colour)
+        await ctx.send(embed=emb)
+        await ctx.message.delete()
 
 @bot.command()
 async def emb(ctx, link):
@@ -512,14 +525,8 @@ async def unmute(ctx, member: discord.Member = None):
 
   await ctx.send(f'''**{member.mention} has been unmuted by {ctx.author.mention}**''')
 
-
-
-
-
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         bot.load_extension(f'cogs.{filename[:-3]}')
-
-
 
 bot.run('')
